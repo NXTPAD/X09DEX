@@ -3,9 +3,9 @@
 // Everyone signs in on X09 Hub, which sets the shared `x09_sid` cookie for all of x09hub.com.
 // On every request the DEX asks X09 Hub who that cookie belongs to (GET /api/me) and only lets
 // the request through when the Hub marks the account as an owner — i.e. its email is listed in
-// the Hub's X09_OWNER_EMAILS secret. Anyone else gets a locked page (or a 403 from the API).
+// the Hub's X09_OWNER_EMAILS secret. (The developer code in dev-gate.js is the other way in.)
 //
-// The Hub is reached through the HUB service binding (wrangler.jsonc) when present, otherwise
+// The Hub is reached through an optional HUB service binding when one is configured, otherwise
 // over the public URL. If the Hub can't be reached the DEX stays locked (fails closed).
 
 const HUB_ORIGIN = "https://x09hub.com";
@@ -53,39 +53,4 @@ function sessionCookies(request) {
 async function sha256(text) {
   const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(text));
   return [...new Uint8Array(buf)].map((b) => b.toString(16).padStart(2, "0")).join("");
-}
-
-export function lockedApi(check) {
-  return new Response(JSON.stringify({ error: check.error ? "Owner check unavailable" : "X09 DEX is owner-only" }), {
-    status: check.error ? 503 : 403,
-    headers: { "content-type": "application/json", "cache-control": "no-store", "x-robots-tag": "noindex" },
-  });
-}
-
-export function lockedPage(request, check) {
-  const next = encodeURIComponent(new URL(request.url).href);
-  const msg = check.error
-    ? "Couldn't verify your account right now. Try again in a moment."
-    : check.signedIn
-      ? "This account doesn't have access. X09 DEX is limited to the owner account."
-      : "X09 DEX is limited to the owner account. Sign in on X09 Hub to continue.";
-  const html = `<!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="robots" content="noindex"><title>X09 DEX — Locked</title>
-<style>
-  html,body{height:100%;margin:0;background:#000;color:#f5f5f5;font-family:ui-monospace,"JetBrains Mono",Menlo,Consolas,monospace}
-  main{min-height:100%;display:flex;align-items:center;justify-content:center;padding:24px;box-sizing:border-box}
-  .box{max-width:460px;width:100%;border:1px solid rgba(255,255,255,.2);border-radius:16px;padding:28px;background:#0a0a0a}
-  h1{margin:0 0 12px;font-size:20px} p{margin:0 0 22px;color:#a3a3a3;line-height:1.55;font-size:15px}
-  a{display:inline-block;padding:12px 20px;border-radius:999px;background:#f5f5f5;color:#000;text-decoration:none;font-weight:600}
-</style></head>
-<body><main><div class="box">
-  <h1>&gt; access locked_</h1>
-  <p>${msg}</p>
-  <a href="${HUB_ORIGIN}/?next=${next}">Go to X09 Hub</a>
-</div></main></body></html>`;
-  return new Response(html, {
-    status: check.error ? 503 : 403,
-    headers: { "content-type": "text/html; charset=utf-8", "cache-control": "no-store", "x-robots-tag": "noindex" },
-  });
 }

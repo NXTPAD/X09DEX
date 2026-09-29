@@ -8,13 +8,16 @@ Swap any token on **Solana + 8 EVM chains**, explore trending/new coins, and **l
 - **Launch** — EVM: deploys a fixed-supply token, adds Uniswap/PancakeSwap V2 liquidity, anti-snipe max-wallet window, burns LP, optional renounce. Solana: Token-2022 token with on-chain metadata, revoked mint authority. $1 launch fee (configurable) in the chain's native coin.
 - **Non-custodial** — users connect Phantom/Solflare/Backpack/Jupiter (Solana) or MetaMask/Coinbase/Rabby/etc. (EVM). Nothing is ever signed on the server.
 
-## Owner-only access
+## Locked access (developer code)
 
-X09 DEX is locked to the owner account. Every page and API call checks the visitor's X09 Hub sign-in (the shared `x09_sid` cookie) with X09 Hub, and only accounts whose email is in the Hub's `X09_OWNER_EMAILS` secret get in. Everyone else sees a locked page. `/meta/…` (token logos and metadata) stays public so launched tokens still display in wallets and explorers.
+The whole site is locked behind a developer code. Visitors see a lock screen; entering the code unlocks that browser for 30 days.
 
-- The DEX reaches the Hub through the `HUB` service binding to the `x09-hub` Worker (in `wrangler.jsonc`).
-- To let someone else in, add their email to `X09_OWNER_EMAILS` on the **x09-hub** Worker.
-- To open the DEX to everyone again, remove the owner check in `src/worker.js`.
+- **Set the code:** Cloudflare → Workers → `x09-dex` → Settings → Variables and Secrets → add `DEV_CODE` as a **Secret**. Until it's set, nobody can unlock.
+- **Change the code:** update `DEV_CODE` — every device is signed out.
+- **Lock this device again:** visit `/__dev/lock`.
+- Wrong codes are limited to 10 per IP per 15 minutes.
+- Signing in to X09 Hub with an account in the Hub's `X09_OWNER_EMAILS` secret also gets you in.
+- `/meta/…` (token logos and metadata) stays public so launched tokens still display in wallets and explorers.
 
 ## Deploy (GitHub + Cloudflare Workers)
 

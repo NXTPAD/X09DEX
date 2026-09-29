@@ -4,7 +4,8 @@
 // and relays signed ones. Users sign everything in their own wallets.
 
 import { CHAINS, SOLANA, evmChainByKey } from "./chains.js";
-import { ownerCheck, lockedApi, lockedPage } from "./owner-gate.js";
+import { ownerCheck } from "./owner-gate.js";
+import { devUnlocked, handleUnlock, handleLock, lockedApi, lockedPage, UNLOCK_PATH, LOCK_PATH } from "./dev-gate.js";
 
 const JUP = "https://api.jup.ag";
 const GT = "https://api.geckoterminal.com/api/v2";
@@ -18,9 +19,14 @@ export default {
       // Token metadata stays public: launched tokens point wallets and explorers at /meta/…
       if (url.pathname.startsWith("/meta/")) return await serveMeta(env, url);
 
-      // Everything else is owner-only (see owner-gate.js)
-      const check = await ownerCheck(request, env);
-      if (!check.owner) return url.pathname.startsWith("/api/") ? cors(lockedApi(check)) : lockedPage(request, check);
+      // Lock screen: developer code (DEV_CODE secret, see dev-gate.js)
+      if (url.pathname === UNLOCK_PATH) return await handleUnlock(request, env);
+      if (url.pathname === LOCK_PATH) return handleLock();
+
+      // Everything else is locked unless this device entered the developer code,
+      // or is signed in to the X09 owner account (see owner-gate.js)
+      const allowed = (await devUnlocked(request, env)) || (await ownerCheck(request, env)).owner;
+      if (!allowed) return url.pathname.startsWith("/api/") ? cors(lockedApi()) : lockedPage(request);
 
       if (url.pathname.startsWith("/api/")) return cors(await api(request, env, ctx, url));
       const res = await env.ASSETS.fetch(request);

@@ -11,10 +11,6 @@
     // true = every request goes through the Worker first, so the owner-only check covers the whole site
     "run_worker_first": true
   },
-
-  // Owner-only access: the DEX asks X09 Hub (Worker "x09-hub") who is signed in.
-  // The owner is whoever is listed in the Hub's X09_OWNER_EMAILS secret.
-  "services": [{ "binding": "HUB", "service": "x09-hub" }],
   "routes": [{ "pattern": "dex.x09hub.com", "custom_domain": true }],
 
   // The build step (scripts/setup-kv.mjs) finds or creates the "x09-dex-kv" namespace
@@ -35,6 +31,7 @@
     "KYBER_CLIENT_ID": "X09DEX",
     "PUBLIC_ORIGIN": "https://dex.x09hub.com"
   }
+  // REQUIRED secret: DEV_CODE — the developer code that unlocks the site (see src/dev-gate.js).
   // Secrets (optional but recommended), set with `npx wrangler secret put NAME`
   // or in the Cloudflare dashboard → Worker → Settings → Variables:
   //   JUP_API_KEY    — free key from developers.jup.ag/portal (raises Jupiter rate limit)
