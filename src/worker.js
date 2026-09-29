@@ -4,6 +4,7 @@
 // and relays signed ones. Users sign everything in their own wallets.
 
 import { CHAINS, SOLANA, evmChainByKey } from "./chains.js";
+import { ownerCheck, lockedApi, lockedPage } from "./owner-gate.js";
 
 const JUP = "https://api.jup.ag";
 const GT = "https://api.geckoterminal.com/api/v2";
@@ -14,9 +15,19 @@ export default {
     const url = new URL(request.url);
     try {
       if (request.method === "OPTIONS") return cors(new Response(null, { status: 204 }));
-      if (url.pathname.startsWith("/api/")) return cors(await api(request, env, ctx, url));
+      // Token metadata stays public: launched tokens point wallets and explorers at /meta/…
       if (url.pathname.startsWith("/meta/")) return await serveMeta(env, url);
-      return env.ASSETS.fetch(request);
+
+      // Everything else is owner-only (see owner-gate.js)
+      const check = await ownerCheck(request, env);
+      if (!check.owner) return url.pathname.startsWith("/api/") ? cors(lockedApi(check)) : lockedPage(request, check);
+
+      if (url.pathname.startsWith("/api/")) return cors(await api(request, env, ctx, url));
+      const res = await env.ASSETS.fetch(request);
+      const out = new Response(res.body, res);
+      out.headers.set("cache-control", "private, no-store"); // never let a shared cache serve the app to others
+      out.headers.set("x-robots-tag", "noindex");
+      return out;
     } catch (err) {
       return cors(json({ error: err.message || String(err) }, err.status || 500));
     }

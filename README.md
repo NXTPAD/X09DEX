@@ -8,6 +8,14 @@ Swap any token on **Solana + 8 EVM chains**, explore trending/new coins, and **l
 - **Launch** — EVM: deploys a fixed-supply token, adds Uniswap/PancakeSwap V2 liquidity, anti-snipe max-wallet window, burns LP, optional renounce. Solana: Token-2022 token with on-chain metadata, revoked mint authority. $1 launch fee (configurable) in the chain's native coin.
 - **Non-custodial** — users connect Phantom/Solflare/Backpack/Jupiter (Solana) or MetaMask/Coinbase/Rabby/etc. (EVM). Nothing is ever signed on the server.
 
+## Owner-only access
+
+X09 DEX is locked to the owner account. Every page and API call checks the visitor's X09 Hub sign-in (the shared `x09_sid` cookie) with X09 Hub, and only accounts whose email is in the Hub's `X09_OWNER_EMAILS` secret get in. Everyone else sees a locked page. `/meta/…` (token logos and metadata) stays public so launched tokens still display in wallets and explorers.
+
+- The DEX reaches the Hub through the `HUB` service binding to the `x09-hub` Worker (in `wrangler.jsonc`).
+- To let someone else in, add their email to `X09_OWNER_EMAILS` on the **x09-hub** Worker.
+- To open the DEX to everyone again, remove the owner check in `src/worker.js`.
+
 ## Deploy (GitHub + Cloudflare Workers)
 
 1. Cloudflare dashboard → **Workers & Pages → Create → Import a repository** → pick this repo.

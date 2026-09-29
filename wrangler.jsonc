@@ -8,8 +8,13 @@
     "directory": "./public",
     "binding": "ASSETS",
     "not_found_handling": "single-page-application",
-    "run_worker_first": ["/api/*", "/meta/*"]
+    // true = every request goes through the Worker first, so the owner-only check covers the whole site
+    "run_worker_first": true
   },
+
+  // Owner-only access: the DEX asks X09 Hub (Worker "x09-hub") who is signed in.
+  // The owner is whoever is listed in the Hub's X09_OWNER_EMAILS secret.
+  "services": [{ "binding": "HUB", "service": "x09-hub" }],
   "routes": [{ "pattern": "dex.x09hub.com", "custom_domain": true }],
 
   // The build step (scripts/setup-kv.mjs) finds or creates the "x09-dex-kv" namespace
