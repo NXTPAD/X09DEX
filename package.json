@@ -1,0 +1,13 @@
+{
+  "name": "x09-dex",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "build": "node scripts/setup-kv.mjs",
+    "deploy": "node scripts/setup-kv.mjs && wrangler deploy"
+  },
+  "devDependencies": {
+    "wrangler": "^4.0.0"
+  }
+}

@@ -1,0 +1,238 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>X09 DEX</title>
+  <meta name="description" content="X09 DEX — swap any token on Solana and 8 EVM chains, explore trending coins, and launch your own token." />
+  <meta name="theme-color" content="#000000" />
+  <link rel="icon" href="/assets/logo.svg" type="image/svg+xml" />
+  <link rel="manifest" href="/manifest.webmanifest" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+  <canvas id="stars" aria-hidden="true"></canvas>
+  <div class="scan" aria-hidden="true"></div>
+
+  <div class="app">
+    <header class="top">
+      <a class="brand" href="/" aria-label="X09 DEX home">
+        <img class="planet" src="/assets/logo.svg" alt="" />
+        <span><b>X09 DEX</b><small>SWAP · EXPLORE · LAUNCH</small></span>
+      </a>
+      <nav class="tabs" role="tablist">
+        <button role="tab" data-tab="swap" aria-selected="true">SWAP</button>
+        <button role="tab" data-tab="explore" aria-selected="false">EXPLORE</button>
+        <button role="tab" data-tab="launch" aria-selected="false">LAUNCH</button>
+      </nav>
+      <div class="spacer"></div>
+      <button class="btn" id="walletBtn">CONNECT</button>
+    </header>
+
+    <main>
+      <!-- ===================== SWAP ===================== -->
+      <section class="view on" id="view-swap">
+        <div class="swap-wrap">
+          <div>
+            <p class="prompt cursor">select network</p>
+            <div class="chainrow" id="swapChains"></div>
+
+            <div class="panel">
+              <div class="panel-head"><span class="lights"><i></i><i></i><i></i></span> x09://swap <span class="spacer"></span><span id="netLabel"></span></div>
+              <div class="panel-body">
+                <div class="settings">
+                  <span>SLIPPAGE</span>
+                  <span id="slipChips"></span>
+                  <input id="slipCustom" inputmode="decimal" placeholder="custom %" aria-label="Custom slippage percent" />
+                </div>
+
+                <div class="leg">
+                  <div class="leg-top"><span>YOU PAY</span><span>BAL <span id="sellBal">—</span> <button id="maxBtn" type="button">MAX</button></span></div>
+                  <div class="leg-row">
+                    <input class="amount" id="sellAmt" inputmode="decimal" placeholder="0.0" autocomplete="off" aria-label="Amount to pay" />
+                    <button class="tokbtn" id="sellTok" type="button"></button>
+                  </div>
+                  <div class="usd" id="sellUsd"></div>
+                </div>
+
+                <div class="flip-row"><button class="flip" id="flipBtn" type="button" aria-label="Flip tokens">⇅</button></div>
+
+                <div class="leg">
+                  <div class="leg-top"><span>YOU RECEIVE</span><span>BAL <span id="buyBal">—</span></span></div>
+                  <div class="leg-row">
+                    <input class="amount" id="buyAmt" placeholder="0.0" readonly aria-label="Estimated amount received" />
+                    <button class="tokbtn" id="buyTok" type="button"></button>
+                  </div>
+                  <div class="usd" id="buyUsd"></div>
+                </div>
+
+                <div class="details" id="quoteDetails" hidden></div>
+
+                <button class="btn big solid" id="swapBtn" type="button">CONNECT WALLET</button>
+              </div>
+            </div>
+          </div>
+
+          <aside class="panel side-card">
+            <p class="prompt">x09 dex status</p>
+            <div class="term" id="swapLog"></div>
+            <div class="stat-grid">
+              <div class="stat"><small>NETWORKS</small><b id="statChains">9</b></div>
+              <div class="stat"><small>X09 FEE</small><b id="statFee">—</b></div>
+              <div class="stat"><small>CUSTODY</small><b>NONE</b></div>
+              <div class="stat"><small>ROUTING</small><b id="statRouter">—</b></div>
+            </div>
+          </aside>
+        </div>
+      </section>
+
+      <!-- ===================== EXPLORE ===================== -->
+      <section class="view" id="view-explore">
+        <p class="prompt cursor">scan markets</p>
+        <div class="chainrow" id="exploreChains"></div>
+        <div class="toolbar">
+          <button class="chip" data-kind="trending" aria-pressed="true">TRENDING</button>
+          <button class="chip" data-kind="new" aria-pressed="false">NEW PAIRS</button>
+          <button class="chip" data-kind="x09" aria-pressed="false">LAUNCHED ON X09</button>
+          <input class="search" id="exploreSearch" placeholder="search name, ticker or contract…" aria-label="Search tokens" />
+          <select class="chip" id="minLiq" aria-label="Minimum liquidity">
+            <option value="0">ANY LIQ</option>
+            <option value="10000">LIQ ≥ $10K</option>
+            <option value="50000">LIQ ≥ $50K</option>
+            <option value="250000">LIQ ≥ $250K</option>
+          </select>
+        </div>
+        <div class="panel">
+          <div class="panel-head"><span class="lights"><i></i><i></i><i></i></span> x09://explore <span class="spacer"></span><span id="exploreMeta"></span></div>
+          <div style="overflow-x:auto">
+            <table class="market">
+              <thead><tr>
+                <th>TOKEN</th><th>PRICE</th><th class="hide-sm">1H</th><th>24H</th><th class="hide-sm">VOLUME</th><th>LIQ</th><th class="hide-sm">MCAP</th><th class="hide-sm">AGE</th>
+              </tr></thead>
+              <tbody id="exploreBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===================== LAUNCH ===================== -->
+      <section class="view" id="view-launch">
+        <p class="prompt cursor">deploy new token</p>
+        <div class="launch-wrap">
+          <form class="panel" id="launchForm" autocomplete="off">
+            <div class="panel-head"><span class="lights"><i></i><i></i><i></i></span> x09://launch</div>
+            <div class="panel-body form">
+              <div class="field">
+                <label for="lChain">NETWORK</label>
+                <select id="lChain"></select>
+              </div>
+
+              <label class="logo-drop" for="lLogo">
+                <span class="preview" id="lLogoPrev">+</span>
+                <span><b>Token logo</b><br /><small style="color:var(--dim)">PNG / JPG / WEBP · square works best · resized to 512px</small></span>
+                <input type="file" id="lLogo" accept="image/png,image/jpeg,image/webp,image/gif" hidden />
+              </label>
+
+              <div class="row2">
+                <div class="field"><label for="lName">NAME</label><input type="text" id="lName" maxlength="32" placeholder="Orbit Cat" required /></div>
+                <div class="field"><label for="lSym">TICKER</label><input type="text" id="lSym" maxlength="10" placeholder="ORBIT" required /></div>
+              </div>
+              <div class="field"><label for="lDesc">DESCRIPTION</label><textarea id="lDesc" maxlength="500" placeholder="What is this token about?"></textarea></div>
+              <div class="field">
+                <label for="lSupply">TOTAL SUPPLY</label>
+                <input type="number" id="lSupply" min="1" max="1000000000000000" step="1" value="1000000000" required />
+                <div class="hint">Fixed forever — no one can mint more.</div>
+              </div>
+
+              <fieldset>
+                <legend>SOCIALS</legend>
+                <div class="row2">
+                  <div class="field"><label for="lWeb">WEBSITE</label><input type="text" id="lWeb" placeholder="https://…" /></div>
+                  <div class="field"><label for="lX">X / TWITTER</label><input type="text" id="lX" placeholder="https://x.com/…" /></div>
+                </div>
+                <div class="row2">
+                  <div class="field"><label for="lTg">TELEGRAM</label><input type="text" id="lTg" placeholder="https://t.me/…" /></div>
+                  <div class="field"><label for="lDc">DISCORD</label><input type="text" id="lDc" placeholder="https://discord.gg/…" /></div>
+                </div>
+              </fieldset>
+
+              <fieldset id="evmOpts">
+                <legend>LIQUIDITY & ANTI-SNIPE</legend>
+                <label class="check"><input type="checkbox" id="lAddLiq" checked /><span>Add liquidity now on <b id="lDexName">Uniswap V2</b><small>Opens trading the moment the pool exists.</small></span></label>
+                <div id="liqOpts" class="form" style="gap:12px">
+                  <div class="row2">
+                    <div class="field"><label for="lLiqPct">% OF SUPPLY TO POOL</label><input type="number" id="lLiqPct" min="1" max="100" value="95" /><div class="hint">The rest stays in your wallet.</div></div>
+                    <div class="field"><label for="lLiqNative">PAIR WITH (<span id="lNativeSym">ETH</span>)</label><input type="number" id="lLiqNative" min="0" step="any" value="0.05" /><div class="hint">Sets the starting price.</div></div>
+                  </div>
+                  <label class="check"><input type="checkbox" id="lBurnLp" checked /><span>Burn LP tokens<small>Locks the liquidity forever — buyers trust this.</small></span></label>
+                  <label class="check"><input type="checkbox" id="lSnipe" checked /><span>Anti-snipe max wallet<small>Caps every wallet for the first blocks after launch.</small></span></label>
+                  <div class="row2" id="snipeOpts">
+                    <div class="field"><label for="lMaxWallet">MAX WALLET %</label><input type="number" id="lMaxWallet" min="0.01" max="100" step="0.01" value="1" /></div>
+                    <div class="field"><label for="lSnipeBlocks">FOR BLOCKS</label><input type="number" id="lSnipeBlocks" min="1" max="1000" value="20" /><div class="hint" id="lBlockHint"></div></div>
+                  </div>
+                  <label class="check"><input type="checkbox" id="lRenounce" /><span>Renounce ownership after launch<small>Gives up creator controls for good.</small></span></label>
+                </div>
+              </fieldset>
+
+              <fieldset id="solOpts" hidden>
+                <legend>SOLANA OPTIONS</legend>
+                <div class="row2">
+                  <div class="field"><label for="lDecimals">DECIMALS</label><select id="lDecimals"><option>6</option><option>9</option></select></div>
+                  <div class="field"><label>STANDARD</label><input type="text" value="Token-2022 + on-chain metadata" readonly /></div>
+                </div>
+                <label class="check"><input type="checkbox" id="lRevoke" checked /><span>Revoke mint authority<small>Supply can never change. Strongly recommended.</small></span></label>
+                <div class="hint">After launch, open a pool on Raydium or Meteora with the link we give you — trading starts once liquidity exists.</div>
+              </fieldset>
+
+              <div class="details" id="launchCost"></div>
+              <button class="btn big solid" id="launchBtn" type="submit">LAUNCH TOKEN</button>
+            </div>
+          </form>
+
+          <aside class="form">
+            <div class="panel side-card">
+              <p class="prompt">launch console</p>
+              <div class="term launch-log" id="launchLog">waiting for input…</div>
+              <div id="launchResult"></div>
+            </div>
+            <div class="panel side-card">
+              <p class="prompt">recently launched on x09 <span id="launchCount" style="color:var(--text)"></span></p>
+              <div class="launches" id="launchList"></div>
+            </div>
+          </aside>
+        </div>
+      </section>
+    </main>
+
+    <footer>
+      <span>X09 DEX · non-custodial · you sign every transaction in your own wallet</span>
+      <span><a href="https://x09hub.com">X09 HUB</a> · <a href="https://ai.x09hub.com">X09 AI</a> · <a href="https://docs.x09hub.com">X09 DOCS</a> · <a href="/contracts/X09Token.sol" target="_blank" rel="noopener">TOKEN CONTRACT</a></span>
+    </footer>
+  </div>
+
+  <!-- token picker -->
+  <div class="modal" id="tokModal" role="dialog" aria-modal="true" aria-label="Select token">
+    <div class="panel">
+      <div class="panel-head">SELECT TOKEN <button class="xbtn" data-close aria-label="Close">✕</button></div>
+      <div class="panel-body">
+        <input class="search" id="tokSearch" placeholder="name, ticker or paste contract address" style="width:100%" />
+        <div class="tok-list" id="tokList"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- wallet picker -->
+  <div class="modal" id="walletModal" role="dialog" aria-modal="true" aria-label="Connect wallet">
+    <div class="panel">
+      <div class="panel-head">CONNECT WALLET <button class="xbtn" data-close aria-label="Close">✕</button></div>
+      <div class="panel-body" id="walletList"></div>
+    </div>
+  </div>
+
+  <div class="toast-wrap" id="toasts" aria-live="polite"></div>
+  <script type="module" src="/app.js"></script>
+</body>
+</html>

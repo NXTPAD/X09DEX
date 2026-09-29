@@ -1,0 +1,39 @@
+{
+  // X09 DEX — Cloudflare Worker config
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "x09-dex",
+  "main": "src/worker.js",
+  "compatibility_date": "2026-09-01",
+  "assets": {
+    "directory": "./public",
+    "binding": "ASSETS",
+    "not_found_handling": "single-page-application",
+    "run_worker_first": ["/api/*", "/meta/*"]
+  },
+  "routes": [{ "pattern": "dex.x09hub.com", "custom_domain": true }],
+
+  // The build step (scripts/setup-kv.mjs) finds or creates the "x09-dex-kv" namespace
+  // and fills in this ID automatically — nothing to paste.
+  "kv_namespaces": [{ "binding": "KV", "id": "PASTE_KV_NAMESPACE_ID_HERE" }],
+
+  "vars": {
+    // Your fee on every swap, in basis points (50 = 0.5%). Solana is clamped to 50–255 by Jupiter.
+    "FEE_BPS": "50",
+    // EVM wallet that receives swap fees + launch fees on every EVM chain.
+    "EVM_FEE_WALLET": "",
+    // Solana wallet that receives launch fees.
+    "SOL_FEE_WALLET": "",
+    // Jupiter referral account (see README) — Solana swap fees go here.
+    "JUP_REFERRAL_ACCOUNT": "",
+    // Flat fee to launch a token, in USD, paid in the chain's native coin. 0 = free.
+    "LAUNCH_FEE_USD": "1",
+    "KYBER_CLIENT_ID": "X09DEX",
+    "PUBLIC_ORIGIN": "https://dex.x09hub.com"
+  }
+  // Secrets (optional but recommended), set with `npx wrangler secret put NAME`
+  // or in the Cloudflare dashboard → Worker → Settings → Variables:
+  //   JUP_API_KEY    — free key from developers.jup.ag/portal (raises Jupiter rate limit)
+  //   SOLANA_RPC     — a paid Solana RPC URL (e.g. Helius); public RPC is heavily rate-limited
+  //   KYBER_API_KEY  — optional KyberSwap gateway key
+  //   RPC_ETHEREUM, RPC_BASE, RPC_BSC ... — optional private RPC per EVM chain
+}
