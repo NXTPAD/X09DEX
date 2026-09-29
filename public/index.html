@@ -159,22 +159,38 @@
                 </div>
               </fieldset>
 
+              <fieldset>
+                <legend>CREATOR ALLOCATION</legend>
+                <div class="row2">
+                  <div class="field"><label for="lCreatorPct">YOU KEEP (%)</label><input type="number" id="lCreatorPct" min="0" max="50" step="0.1" value="5" /><div class="hint">Max 50%. Buyers see how much the dev holds.</div></div>
+                  <div class="field"><label>SPLIT</label><input type="text" id="lSplit" readonly /></div>
+                </div>
+                <div class="hint" id="lAllocNote"></div>
+              </fieldset>
+
               <fieldset id="evmOpts">
-                <legend>LIQUIDITY & ANTI-SNIPE</legend>
-                <label class="check"><input type="checkbox" id="lAddLiq" checked /><span>Add liquidity now on <b id="lDexName">Uniswap V2</b><small>Opens trading the moment the pool exists.</small></span></label>
+                <legend>LIQUIDITY</legend>
+                <label class="check"><input type="checkbox" id="lAddLiq" checked /><span>Add liquidity now on <b id="lDexName">Uniswap V2</b><small>Everything you don't keep goes into the pool, and trading opens the moment it exists.</small></span></label>
                 <div id="liqOpts" class="form" style="gap:12px">
-                  <div class="row2">
-                    <div class="field"><label for="lLiqPct">% OF SUPPLY TO POOL</label><input type="number" id="lLiqPct" min="1" max="100" value="95" /><div class="hint">The rest stays in your wallet.</div></div>
-                    <div class="field"><label for="lLiqNative">PAIR WITH (<span id="lNativeSym">ETH</span>)</label><input type="number" id="lLiqNative" min="0" step="any" value="0.05" /><div class="hint">Sets the starting price.</div></div>
-                  </div>
+                  <div class="field"><label for="lLiqNative">PAIR WITH (<span id="lNativeSym">ETH</span>)</label><input type="number" id="lLiqNative" min="0" step="any" value="0.05" /><div class="hint">Sets the starting price.</div></div>
                   <label class="check"><input type="checkbox" id="lBurnLp" checked /><span>Burn LP tokens<small>Locks the liquidity forever — buyers trust this.</small></span></label>
-                  <label class="check"><input type="checkbox" id="lSnipe" checked /><span>Anti-snipe max wallet<small>Caps every wallet for the first blocks after launch.</small></span></label>
-                  <div class="row2" id="snipeOpts">
-                    <div class="field"><label for="lMaxWallet">MAX WALLET %</label><input type="number" id="lMaxWallet" min="0.01" max="100" step="0.01" value="1" /></div>
-                    <div class="field"><label for="lSnipeBlocks">FOR BLOCKS</label><input type="number" id="lSnipeBlocks" min="1" max="1000" value="20" /><div class="hint" id="lBlockHint"></div></div>
-                  </div>
                   <label class="check"><input type="checkbox" id="lRenounce" /><span>Renounce ownership after launch<small>Gives up creator controls for good.</small></span></label>
                 </div>
+              </fieldset>
+
+              <fieldset id="snipeBox">
+                <legend>ANTI-SNIPER</legend>
+                <div id="snipeOn" class="form" style="gap:12px">
+                  <label class="check"><input type="checkbox" id="lSnipe" checked /><span>Protect the launch from bots<small>Enforced by the token contract itself — no one can bypass it.</small></span></label>
+                  <div id="snipeOpts" class="form" style="gap:12px">
+                    <div class="row3">
+                      <div class="field"><label for="lDeadBlocks">BLOCK ALL BUYS</label><select id="lDeadBlocks"><option value="0">Off</option><option value="1">1st block</option><option value="2" selected>First 2 blocks</option><option value="3">First 3 blocks</option><option value="5">First 5 blocks</option></select><div class="hint">Stops bots that buy the instant trading opens.</div></div>
+                      <div class="field"><label for="lMaxWallet">MAX WALLET %</label><input type="number" id="lMaxWallet" min="0.01" max="100" step="0.01" value="1" /><div class="hint">No wallet can hold more.</div></div>
+                      <div class="field"><label for="lSnipeSecs">FOR (SECONDS)</label><input type="number" id="lSnipeSecs" min="10" max="3600" step="10" value="60" /><div class="hint" id="lBlockHint"></div></div>
+                    </div>
+                  </div>
+                </div>
+                <div class="hint" id="snipeOff" hidden></div>
               </fieldset>
 
               <fieldset id="solOpts" hidden>

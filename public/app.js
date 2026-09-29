@@ -867,10 +867,13 @@ function bindLaunch() {
   const toggles = () => {
     $("#liqOpts").style.display = $("#lAddLiq").checked ? "" : "none";
     $("#snipeOpts").style.display = $("#lSnipe").checked ? "" : "none";
+    updateSnipeBox();
+    updateAllocation();
     updateLaunchCost();
   };
   ["lAddLiq", "lSnipe"].forEach((id) => $("#" + id).addEventListener("change", toggles));
-  ["lLiqNative", "lLiqPct", "lSupply"].forEach((id) => $("#" + id).addEventListener("input", updateLaunchCost));
+  ["lLiqNative", "lSupply", "lCreatorPct"].forEach((id) => $("#" + id).addEventListener("input", () => { updateAllocation(); updateLaunchCost(); }));
+  $("#lSnipeSecs").addEventListener("input", updateSnipeBox);
   toggles();
   $("#launchForm").addEventListener("submit", onLaunch);
   $("#launchList").addEventListener("click", (e) => {
@@ -879,7 +882,47 @@ function bindLaunch() {
   });
 }
 
-const BLOCK_HINTS = { ethereum: [3, "~12s blocks"], base: [20, "~2s blocks"], optimism: [20, "~2s blocks"], bsc: [40, "fast blocks"], polygon: [20, "~2s blocks"], avalanche: [20, "~2s blocks"], arbitrum: [4, "counts L1 blocks (~12s)"], robinhood: [4, "counts parent-chain blocks"] };
+// Seconds per block as seen by the token contract's block.number
+// (Arbitrum-based chains report Ethereum block numbers, ~12s).
+const BLOCK_SECS = { ethereum: 12, base: 2, optimism: 2, bsc: 0.75, polygon: 2, avalanche: 2, arbitrum: 12, robinhood: 12 };
+const snipeBlocksFor = (key, secs) => Math.min(1000, Math.max(1, Math.ceil(secs / (BLOCK_SECS[key] || 2))));
+
+function updateSnipeBox() {
+  const c = chainOf($("#lChain").value);
+  if (!c) return;
+  const svm = c.vm === "svm";
+  const canLiq = !svm && $("#lAddLiq").checked && !!c.v2Router;
+  $("#snipeOn").hidden = !canLiq;
+  $("#snipeOff").hidden = canLiq;
+  if (svm) {
+    $("#snipeOff").innerHTML = "Solana tokens can't limit wallets or block buys without a custom on-chain program, so the contract-level anti-sniper is EVM-only for now.<br><br><b>Best protection on Solana:</b> launch, create the Raydium pool right away, and only then post the contract address.";
+  } else if (!c.v2Router) {
+    $("#snipeOff").textContent = `Anti-sniper needs X09 to add the liquidity, which isn't available on ${c.name} yet. Trading opens as soon as the token deploys.`;
+  } else {
+    $("#snipeOff").textContent = "Turn on \"Add liquidity now\" to use the anti-sniper — it activates when X09 opens trading.";
+  }
+  const secs = Number($("#lSnipeSecs").value) || 0;
+  const blocks = snipeBlocksFor(c.key, secs);
+  $("#lBlockHint").textContent = svm ? "" : `≈ ${blocks} blocks on ${c.name}${blocks === 1000 ? " (max)" : ""}`;
+}
+
+function updateAllocation() {
+  const c = chainOf($("#lChain").value);
+  if (!c) return;
+  const pct = Math.min(50, Math.max(0, Number($("#lCreatorPct").value) || 0));
+  let supply = 0;
+  try { supply = Number(BigInt($("#lSupply").value || "0")); } catch {}
+  const fmt = (n) => n.toLocaleString("en-US", { maximumFractionDigits: 0 });
+  const mine = (supply * pct) / 100, pool = supply - mine;
+  const withPool = c.vm === "svm" || $("#lAddLiq").checked;
+  $("#lSplit").value = withPool ? `You ${pct}% · Pool ${+(100 - pct).toFixed(1)}%` : `You 100%`;
+  $("#lAllocNote").textContent =
+    c.vm === "svm"
+      ? `You'll receive all ${fmt(supply)} tokens. Keep ${fmt(mine)} and put ${fmt(pool)} into the Raydium pool.`
+      : withPool
+        ? `${fmt(mine)} tokens stay in your wallet, ${fmt(pool)} go into the pool.`
+        : `Without X09 liquidity the whole supply goes to your wallet.`;
+}
 
 function onLaunchChain() {
   const c = chainOf($("#lChain").value);
@@ -893,11 +936,10 @@ function onLaunchChain() {
     if (!canLiq) $("#lAddLiq").checked = false;
     $("#lDexName").textContent = c.v2Name || "— (not available on this chain yet)";
     $("#lAddLiq").dispatchEvent(new Event("change"));
-    const [blocks, hint] = BLOCK_HINTS[c.key] || [10, ""];
-    $("#lSnipeBlocks").value = blocks;
-    $("#lBlockHint").textContent = hint;
     $("#lLiqNative").value = { ethereum: 0.1, bsc: 0.2, polygon: 100, avalanche: 3 }[c.key] ?? 0.05;
   }
+  updateSnipeBox();
+  updateAllocation();
   updateWalletBtn();
   updateLaunchCost();
 }
@@ -913,7 +955,7 @@ async function updateLaunchCost() {
   const rows = [];
   if (usd > 0 && feeWallet) rows.push(["LAUNCH FEE", price ? `$${usd} ≈ ${(usd / price).toPrecision(3)} ${sym}` : `$${usd} in ${sym}`]);
   else rows.push(["LAUNCH FEE", "FREE"]);
-  if (c.vm === "evm" && $("#lAddLiq").checked) rows.push(["LIQUIDITY", `${$("#lLiqNative").value || 0} ${sym} + ${$("#lLiqPct").value || 0}% of supply`]);
+  if (c.vm === "evm" && $("#lAddLiq").checked) rows.push(["LIQUIDITY", `${$("#lLiqNative").value || 0} ${sym} + ${+(100 - (Number($("#lCreatorPct").value) || 0)).toFixed(1)}% of supply`]);
   if (c.vm === "svm") rows.push(["RENT", "≈ 0.004 SOL (account storage)"]);
   rows.push(["NETWORK GAS", "paid in your wallet"]);
   $("#launchCost").innerHTML = rows.map(([k, v]) => `<div><span>${k}</span><b>${v}</b></div>`).join("");
@@ -968,12 +1010,13 @@ async function onLaunch(e) {
     image: logoData,
     // evm
     addLiquidity: !svm && $("#lAddLiq").checked,
-    liqPct: Number($("#lLiqPct").value),
+    creatorPct: Number($("#lCreatorPct").value) || 0,
     liqNative: $("#lLiqNative").value.trim(),
     burnLp: $("#lBurnLp").checked,
     antiSnipe: $("#lSnipe").checked,
     maxWalletPct: Number($("#lMaxWallet").value),
-    snipeBlocks: Number($("#lSnipeBlocks").value),
+    snipeBlocks: snipeBlocksFor(c.key, Number($("#lSnipeSecs").value) || 0),
+    deadBlocks: Number($("#lDeadBlocks").value),
     renounce: $("#lRenounce").checked,
     // solana
     decimals: Number($("#lDecimals").value),
@@ -984,10 +1027,10 @@ async function onLaunch(e) {
     (!form.name && "Enter a name") ||
     (!/^[A-Z0-9$]{1,10}$/.test(form.symbol) && "Ticker: 1-10 letters/numbers") ||
     (!/^\d+$/.test(form.supply) || BigInt(form.supply) < 1n || BigInt(form.supply) > 10n ** 15n ? "Supply: whole number between 1 and 1,000,000,000,000,000" : "") ||
-    (form.addLiquidity && !(form.liqPct >= 1 && form.liqPct <= 100) && "Pool % must be 1-100") ||
+    (!(form.creatorPct >= 0 && form.creatorPct <= 50) && "Creator allocation must be 0-50%") ||
     (form.addLiquidity && !(Number(form.liqNative) > 0) && `Enter how much ${c.native.symbol} to pair`) ||
     (form.addLiquidity && form.antiSnipe && !(form.maxWalletPct > 0 && form.maxWalletPct <= 100) && "Max wallet must be 0.01-100%") ||
-    (form.addLiquidity && form.antiSnipe && !(form.snipeBlocks >= 1 && form.snipeBlocks <= 1000) && "Anti-snipe blocks must be 1-1000");
+    (form.addLiquidity && form.antiSnipe && !(Number($("#lSnipeSecs").value) >= 10) && "Anti-sniper duration must be at least 10 seconds");
   if (problem) return toast(esc(problem), true);
 
   if (!S.prices) S.prices = await getJSON("/api/price").catch(() => null);

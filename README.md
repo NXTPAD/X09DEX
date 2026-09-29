@@ -49,8 +49,8 @@ Set with `npx wrangler secret put NAME` or dashboard → Settings → Variables 
 
 **EVM** (`contracts/X09Token.sol`, compiled in the user's browser with the official Solidity 0.8.26 compiler, then cached):
 1. Deploy — whole supply minted to the creator, launch fee forwarded to `EVM_FEE_WALLET` in the same transaction.
-2. Approve + `addLiquidityETH` on Uniswap V2 (PancakeSwap V2 on BNB Chain).
-3. `openTrading(pair)` — trading can never be closed again. During the anti-snipe window no wallet can hold more than the max-wallet %.
+2. Creator allocation: the creator keeps 0–50% of supply; the rest goes into the pool. Approve + `addLiquidityETH` on Uniswap V2 (PancakeSwap V2 on BNB Chain).
+3. `openTrading(pair)` — trading can never be closed again. Anti-sniper: buys from the pool are refused for the first 0–5 blocks, then for the chosen time no wallet can hold more than the max-wallet %.
 4. Optional: burn LP to `0x…dEaD`, renounce ownership.
 
 No taxes, no blacklist, no pause, no mint. Robinhood Chain has no verified V2 router yet, so launches there deploy the token with trading open and the creator adds liquidity elsewhere.

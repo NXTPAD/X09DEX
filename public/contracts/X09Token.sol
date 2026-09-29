@@ -5,8 +5,9 @@ pragma solidity 0.8.26;
 /// @notice Fixed-supply ERC-20 launched from X09 DEX.
 ///         - Whole supply is minted once to the creator; no mint function exists.
 ///         - No buy/sell taxes, no blacklist, no pause.
-///         - Optional anti-snipe: for the first `antiSnipeBlocks` blocks after trading
-///           opens, no wallet can hold more than `maxWallet` tokens.
+///         - Optional anti-sniper: buys from the pool are refused for the first
+///           `deadBlocks` blocks after trading opens, and for the first `antiSnipeBlocks`
+///           blocks no wallet can hold more than `maxWallet` tokens.
 ///         - Before trading opens only the creator can move tokens (so liquidity can be
 ///           added safely). Once open, trading can never be closed again.
 contract X09Token {
@@ -21,7 +22,9 @@ contract X09Token {
     mapping(address => bool) public isLimitExempt;
 
     address public owner;
+    address public pair;                      // main liquidity pool, set when trading opens
     uint256 public tradingBlock;              // 0 until trading opens
+    uint256 public immutable deadBlocks;      // blocks after opening where pool buys revert
     uint256 public immutable antiSnipeBlocks; // length of the max-wallet window
     uint256 public immutable maxWallet;       // cap per wallet during the window
 
@@ -40,6 +43,7 @@ contract X09Token {
     /// @param supply_         total supply in whole tokens (18 decimals are added)
     /// @param maxWalletBps_   max wallet during anti-snipe window, in basis points of supply (1-10000)
     /// @param antiSnipeBlocks_ blocks the max-wallet rule lasts after trading opens (0 = off)
+    /// @param deadBlocks_     blocks after opening in which buys from the pool are refused (0-5)
     /// @param openTrading_    open trading immediately (use when not adding liquidity from X09)
     /// @param metadataURI_    link to the token's JSON metadata (logo, socials)
     /// @param feeTo_          receives any launch fee sent with the deployment
@@ -49,6 +53,7 @@ contract X09Token {
         uint256 supply_,
         uint256 maxWalletBps_,
         uint256 antiSnipeBlocks_,
+        uint256 deadBlocks_,
         bool openTrading_,
         string memory metadataURI_,
         address feeTo_
@@ -56,6 +61,7 @@ contract X09Token {
         require(supply_ > 0 && supply_ <= 1e15, "X09: bad supply");
         require(maxWalletBps_ > 0 && maxWalletBps_ <= 10000, "X09: bad max wallet");
         require(antiSnipeBlocks_ <= 1000, "X09: window too long");
+        require(deadBlocks_ <= 5, "X09: too many dead blocks");
 
         name = name_;
         symbol = symbol_;
@@ -65,6 +71,7 @@ contract X09Token {
         totalSupply = total;
         maxWallet = (total * maxWalletBps_) / 10000;
         antiSnipeBlocks = antiSnipeBlocks_;
+        deadBlocks = deadBlocks_;
 
         owner = msg.sender;
         isLimitExempt[msg.sender] = true;
@@ -115,6 +122,8 @@ contract X09Token {
         if (tradingBlock == 0) {
             // Pre-launch: only the creator may move tokens (e.g. to add liquidity).
             require(from == owner || to == owner, "X09: trading not open");
+        } else if (from == pair && pair != address(0) && to != owner && block.number < tradingBlock + deadBlocks) {
+            revert("X09: launch blocks - buys open shortly");
         } else if (
             antiSnipeBlocks > 0 &&
             block.number < tradingBlock + antiSnipeBlocks &&
@@ -136,11 +145,14 @@ contract X09Token {
 
     /// @notice Opens trading forever. `pair` (the liquidity pool) is exempt from the
     ///         max-wallet rule so people can sell during the anti-snipe window.
-    function openTrading(address pair) external onlyOwner {
+    function openTrading(address pair_) external onlyOwner {
         require(tradingBlock == 0, "X09: already open");
-        if (pair != address(0)) isLimitExempt[pair] = true;
+        if (pair_ != address(0)) {
+            pair = pair_;
+            isLimitExempt[pair_] = true;
+        }
         tradingBlock = block.number;
-        emit TradingOpened(block.number, pair);
+        emit TradingOpened(block.number, pair_);
     }
 
     /// @notice Gives up creator control. Only allowed once trading is open, so the

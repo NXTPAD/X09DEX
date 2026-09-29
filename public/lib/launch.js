@@ -104,10 +104,12 @@ export async function launchEvm(ctx, form) {
   const snipe = withLiq && form.antiSnipe;
   const maxWalletBps = snipe ? Math.max(1, Math.round(form.maxWalletPct * 100)) : 10000;
   const snipeBlocks = snipe ? form.snipeBlocks : 0;
+  const deadBlocks = snipe ? form.deadBlocks : 0;
+  const poolPct = 100 - form.creatorPct;
 
   const args = evm.abiEncode(
-    ["string", "string", "uint256", "uint256", "uint256", "bool", "string", "address"],
-    [form.name, form.symbol, supply, maxWalletBps, snipeBlocks, !withLiq, meta.uri, fee.wallet || owner]
+    ["string", "string", "uint256", "uint256", "uint256", "uint256", "bool", "string", "address"],
+    [form.name, form.symbol, supply, maxWalletBps, snipeBlocks, deadBlocks, !withLiq, meta.uri, fee.wallet || owner]
   );
 
   log(`deploying ${form.symbol}${fee.amount ? ` (launch fee ${Number(fee.amount) / 1e18} ${chain.native.symbol})` : ""} — confirm in wallet`);
@@ -127,7 +129,8 @@ export async function launchEvm(ctx, form) {
 
   // ---- liquidity
   const router = chain.v2Router;
-  const liqTokens = (total * BigInt(Math.round(form.liqPct * 100))) / 10000n;
+  const liqTokens = (total * BigInt(Math.round(poolPct * 100))) / 10000n;
+  log(`creator allocation: ${form.creatorPct}% stays in your wallet, ${poolPct}% goes to the pool`);
   const liqNative = parseNative(form.liqNative);
   const call = (to, data) => provider.request({ method: "eth_call", params: [{ to, data }, "latest"] });
   const send = async (label, tx) => {
@@ -141,7 +144,7 @@ export async function launchEvm(ctx, form) {
   await send(`approve ${chain.v2Name}`, { to: token, data: evm.callData(evm.SEL.approve, ["address", "uint256"], [router, liqTokens]) });
 
   const deadline = Math.floor(Date.now() / 1000) + 1800;
-  await send(`add liquidity (${form.liqNative} ${chain.native.symbol} + ${form.liqPct}% supply)`, {
+  await send(`add liquidity (${form.liqNative} ${chain.native.symbol} + ${poolPct}% supply)`, {
     to: router,
     value: liqNative,
     data: evm.callData(
@@ -161,10 +164,15 @@ export async function launchEvm(ctx, form) {
   if (/^0x0+$/.test(pairAddr)) throw new Error("Could not find the new pool — open trading manually from the explorer (openTrading).");
   log(`pool: ${pairAddr}`);
 
-  await send(snipe ? `open trading (anti-snipe ${form.maxWalletPct}% for ${snipeBlocks} blocks)` : "open trading", {
+  await send(
+    snipe
+      ? `open trading (anti-sniper: ${deadBlocks ? `buys blocked for ${deadBlocks} block${deadBlocks > 1 ? "s" : ""}, then ` : ""}max wallet ${form.maxWalletPct}% for ${snipeBlocks} blocks)`
+      : "open trading",
+    {
     to: token,
     data: sel(build.methods, "openTrading(address)") + evm.abiEncode(["address"], [pairAddr]),
-  });
+    }
+  );
 
   if (form.burnLp) {
     let lp = 0n;
@@ -257,6 +265,7 @@ export async function launchSolana(ctx, form) {
   if (form.revokeMint) log("mint authority revoked ✓", "ok");
 
   await recordLaunch(ctx, { chain: "solana", address, name: form.name, symbol: form.symbol, image: meta.image, tx: sig });
-  log("next: add a SOL pool on Raydium to open trading.");
+  const poolPct = 100 - form.creatorPct;
+  log(`next: keep ${form.creatorPct}% and put the other ${poolPct}% into a SOL pool on Raydium to open trading.`);
   return { address, image: meta.image, tradable: false };
 }
