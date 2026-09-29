@@ -1,0 +1,5 @@
+User-agent: *
+Disallow: /api/
+Disallow: /meta/
+
+Sitemap: https://dex.x09hub.com/sitemap.xml
