@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+  <defs>
+    <radialGradient id="x09p" cx="34%" cy="30%" r="78%">
+      <stop offset="0" stop-color="#ffffff"/>
+      <stop offset=".38" stop-color="#e2e2e2"/>
+      <stop offset=".72" stop-color="#6b6b6b"/>
+      <stop offset="1" stop-color="#161616"/>
+    </radialGradient>
+    <clipPath id="x09fa"><rect x="-40" y="0" width="80" height="40" transform="translate(32 32) rotate(-30)"/></clipPath>
+    <clipPath id="x09fb"><rect x="-40" y="0" width="80" height="40" transform="translate(32 32) rotate(30)"/></clipPath>
+  </defs>
+  <g stroke-linecap="round">
+    <ellipse cx="32" cy="32" rx="29" ry="8.6" transform="rotate(-30 32 32)" stroke="#fff" stroke-opacity=".55" stroke-width="2.2"/>
+    <ellipse cx="32" cy="32" rx="29" ry="8.6" transform="rotate(30 32 32)" stroke="#fff" stroke-opacity=".55" stroke-width="2.2"/>
+    <circle cx="32" cy="32" r="14.5" fill="url(#x09p)"/>
+    <g clip-path="url(#x09fa)">
+      <ellipse cx="32" cy="32" rx="29" ry="8.6" transform="rotate(-30 32 32)" stroke="#000" stroke-width="6"/>
+      <ellipse cx="32" cy="32" rx="29" ry="8.6" transform="rotate(-30 32 32)" stroke="#fff" stroke-width="2.4"/>
+    </g>
+    <g clip-path="url(#x09fb)">
+      <ellipse cx="32" cy="32" rx="29" ry="8.6" transform="rotate(30 32 32)" stroke="#000" stroke-width="6"/>
+      <ellipse cx="32" cy="32" rx="29" ry="8.6" transform="rotate(30 32 32)" stroke="#fff" stroke-width="2.4"/>
+    </g>
+    <circle cx="50.5" cy="9.5" r="2.7" fill="#fff"/>
+  </g>
+</svg>

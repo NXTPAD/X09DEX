@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+  <defs>
+    <linearGradient id="x09dxp" x1="18" y1="10" x2="46" y2="54" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#ffffff"/>
+      <stop offset=".55" stop-color="#d4d4d4"/>
+      <stop offset="1" stop-color="#6b6b6b"/>
+    </linearGradient>
+    <clipPath id="x09dxf"><rect x="-40" y="0" width="80" height="40" transform="translate(32 32) rotate(-30)"/></clipPath>
+  </defs>
+  <g stroke-linecap="round" stroke-linejoin="round">
+    <ellipse cx="32" cy="32" rx="29" ry="8.6" transform="rotate(-30 32 32)" stroke="#fff" stroke-opacity=".55" stroke-width="2.2"/>
+    <circle cx="32" cy="32" r="17" fill="url(#x09dxp)"/>
+    <path d="M23 27h17m-5-5l5 5-5 5" stroke="#161616" stroke-width="3"/>
+    <path d="M41 37H24m5 5l-5-5 5-5" stroke="#161616" stroke-width="3"/>
+    <g clip-path="url(#x09dxf)">
+      <ellipse cx="32" cy="32" rx="29" ry="8.6" transform="rotate(-30 32 32)" stroke="#000" stroke-width="6"/>
+      <ellipse cx="32" cy="32" rx="29" ry="8.6" transform="rotate(-30 32 32)" stroke="#fff" stroke-width="2.4"/>
+    </g>
+    <circle cx="55.5" cy="50" r="2.7" fill="#fff"/>
+  </g>
+</svg>

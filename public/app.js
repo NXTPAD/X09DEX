@@ -115,6 +115,8 @@ const savePairs = () =>
 // ================================================================ boot
 (async function boot() {
   stars();
+  x09Logo($("#x09Logo"), 32);
+  bindSwitcher();
   bindTabs();
   try {
     S.cfg = await getJSON("/api/config");
@@ -718,7 +720,8 @@ function onWalletChange() {
 function updateWalletBtn() {
   const vm = S.tab === "launch" ? launchVm() : isSol() ? "svm" : "evm";
   const a = vm === "svm" ? S.sol.address : S.evm.address;
-  $("#walletBtn").innerHTML = a ? `<span class="dot"></span> ${short(a)}` : "CONNECT";
+  $("#walletBtn").innerHTML = a ? `<span class="dot"></span> ${short(a)}` : "Connect";
+  $("#walletBtn").classList.toggle("connected", !!a);
   if (S.tab === "swap") updateSwapBtn();
 }
 
@@ -1092,6 +1095,55 @@ async function loadLaunches() {
   } catch {
     $("#launchList").innerHTML = `<div class="term">—</div>`;
   }
+}
+
+// ================================================================ X09 header
+function bindSwitcher() {
+  const btn = $("#switchBtn"), menu = $("#switchMenu");
+  btn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    const show = menu.hidden;
+    menu.hidden = !show;
+    btn.setAttribute("aria-expanded", String(show));
+  });
+  document.addEventListener("click", (e) => {
+    if (!$("#switcher").contains(e.target)) { menu.hidden = true; btn.setAttribute("aria-expanded", "false"); }
+  });
+}
+
+// The animated X09 logo (same as X09 Hub): the moon orbits and dips behind the planet; rings spin on hover/tap.
+function x09Logo(el, size = 28) {
+  const id = "x" + Math.random().toString(36).slice(2, 7);
+  el.innerHTML = `<svg viewBox="0 0 64 64" width="${size}" height="${size}" fill="none" aria-hidden="true">
+    <defs><radialGradient id="${id}p" cx="34%" cy="30%" r="78%"><stop offset="0" stop-color="#fff"/><stop offset=".38" stop-color="#e2e2e2"/><stop offset=".72" stop-color="#6b6b6b"/><stop offset="1" stop-color="#161616"/></radialGradient></defs>
+    <g class="rb"></g><circle class="mb" r="2.7" fill="#fff"/><circle cx="32" cy="32" r="14.5" fill="url(#${id}p)"/><g class="rf"></g><circle class="mf" r="2.7" fill="#fff"/></svg>`;
+  const svg = el.firstElementChild, rb = svg.querySelector(".rb"), rf = svg.querySelector(".rf");
+  const mb = svg.querySelector(".mb"), mf = svg.querySelector(".mf");
+  const rx = 29, ry = 8.6;
+  const arc = (deg, front) => {
+    const a = (deg * Math.PI) / 180, c = Math.cos(a), s = Math.sin(a);
+    const P = (t) => { const x = rx * Math.cos(t), y = ry * Math.sin(t); return `${(32 + x * c - y * s).toFixed(2)} ${(32 + x * s + y * c).toFixed(2)}`; };
+    const pts = []; for (let i = 0; i <= 24; i++) pts.push(P((front ? 0 : Math.PI) + (i / 24) * Math.PI));
+    return "M" + pts.join(" L");
+  };
+  let spin = 0, vspin = 0, t = Math.random() * 6;
+  const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  el.addEventListener("pointerenter", () => (vspin += 140));
+  el.addEventListener("click", () => (vspin += 260));
+  let last = performance.now();
+  (function tick(now) {
+    const dt = Math.min(0.05, (now - last) / 1000); last = now;
+    if (!reduce) { vspin += (-spin * 30 - vspin * 5) * dt; spin += vspin * dt; t += dt * 0.9; }
+    const A = -30 + spin * 0.12, Bd = 30 - spin * 0.12;
+    rb.innerHTML = `<path d="${arc(A, false)}" stroke="#fff" stroke-opacity=".55" stroke-width="2.2" stroke-linecap="round"/><path d="${arc(Bd, false)}" stroke="#fff" stroke-opacity=".55" stroke-width="2.2" stroke-linecap="round"/>`;
+    rf.innerHTML = [A, Bd].map((d) => `<path d="${arc(d, true)}" stroke="#000" stroke-width="6"/><path d="${arc(d, true)}" stroke="#fff" stroke-width="2.4" stroke-linecap="round"/>`).join("");
+    const a = (-58 * Math.PI) / 180, x = 25 * Math.cos(t), y = 7 * Math.sin(t);
+    const mx = 32 + x * Math.cos(a) - y * Math.sin(a), my = 32 + x * Math.sin(a) + y * Math.cos(a);
+    const front = Math.sin(t) > 0;
+    (front ? mf : mb).setAttribute("cx", mx.toFixed(2)); (front ? mf : mb).setAttribute("cy", my.toFixed(2));
+    (front ? mf : mb).style.opacity = 1; (front ? mb : mf).style.opacity = 0;
+    if (el.isConnected) requestAnimationFrame(tick);
+  })(last);
 }
 
 // ================================================================ starfield

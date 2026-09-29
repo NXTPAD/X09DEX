@@ -6,11 +6,8 @@
   <title>X09 DEX</title>
   <meta name="description" content="X09 DEX — swap any token on Solana and 8 EVM chains, explore trending coins, and launch your own token." />
   <meta name="theme-color" content="#000000" />
-  <link rel="icon" href="/assets/logo.svg" type="image/svg+xml" />
+  <link rel="icon" href="/x09/logo-dex.svg" type="image/svg+xml" />
   <link rel="manifest" href="/manifest.webmanifest" />
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="/styles.css" />
 </head>
 <body>
@@ -18,19 +15,34 @@
   <div class="scan" aria-hidden="true"></div>
 
   <div class="app">
-    <header class="top">
-      <a class="brand" href="/" aria-label="X09 DEX home">
-        <img class="planet" src="/assets/logo.svg" alt="" />
-        <span><b>X09 DEX</b><small>SWAP · EXPLORE · LAUNCH</small></span>
-      </a>
-      <nav class="tabs" role="tablist">
-        <button role="tab" data-tab="swap" aria-selected="true">SWAP</button>
-        <button role="tab" data-tab="explore" aria-selected="false">EXPLORE</button>
-        <button role="tab" data-tab="launch" aria-selected="false">LAUNCH</button>
+    <header class="navpill">
+      <a class="brand" href="/" aria-label="X09 DEX home"><span class="x09-logo" id="x09Logo"></span><span class="x09-wordmark">X09<small>DEX</small></span></a>
+      <nav class="tabs" role="tablist" aria-label="Sections">
+        <button role="tab" data-tab="swap" aria-selected="true">Swap</button>
+        <button role="tab" data-tab="explore" aria-selected="false">Explore</button>
+        <button role="tab" data-tab="launch" aria-selected="false">Launch</button>
       </nav>
       <div class="spacer"></div>
-      <button class="btn" id="walletBtn">CONNECT</button>
+      <div class="x09-switch" id="switcher">
+        <button class="x09-switch-btn" id="switchBtn" aria-label="X09 apps" aria-haspopup="true" aria-expanded="false">
+          <svg viewBox="0 0 24 24" width="17" height="17" fill="currentColor"><circle cx="6" cy="6" r="2"/><circle cx="12" cy="6" r="2"/><circle cx="18" cy="6" r="2"/><circle cx="6" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="18" cy="12" r="2"/><circle cx="6" cy="18" r="2"/><circle cx="12" cy="18" r="2"/><circle cx="18" cy="18" r="2"/></svg>
+        </button>
+        <div class="x09-switch-menu" id="switchMenu" role="menu" hidden>
+          <div class="x09-switch-head">X09 · every app</div>
+          <a class="x09-switch-item" href="https://x09hub.com" role="menuitem"><span class="x09-switch-orb"><img src="/x09/logo.svg" alt="" width="30" height="30" /></span><div><b>X09 Hub</b><span>Start here · your X09 account</span></div></a>
+          <a class="x09-switch-item" href="https://ai.x09hub.com" role="menuitem"><span class="x09-switch-orb"><img src="/x09/logo-ai.svg" alt="" width="30" height="30" /></span><div><b>X09 AI</b><span>AI co-pilot · chat</span></div></a>
+          <a class="x09-switch-item" href="https://docs.x09hub.com" role="menuitem"><span class="x09-switch-orb"><img src="/x09/logo-docs.svg" alt="" width="30" height="30" /></span><div><b>X09 Docs</b><span>AI invoices &amp; contracts</span></div></a>
+          <a class="x09-switch-item" href="https://x09hub.com/defense/" role="menuitem"><span class="x09-switch-orb"><img src="/x09/logo-defense.svg" alt="" width="30" height="30" /></span><div><b>X09 Defense</b><span>Cyber defense toolkit</span></div></a>
+          <a class="x09-switch-item here" href="/" role="menuitem"><span class="x09-switch-orb"><img src="/x09/logo-dex.svg" alt="" width="30" height="30" /></span><div><b>X09 DEX</b><span>Swap, explore &amp; launch tokens</span></div><span class="x09-chip on">Here</span></a>
+        </div>
+      </div>
+      <button class="account-btn" id="walletBtn">Connect</button>
     </header>
+    <nav class="tabs tabs-mobile" role="tablist" aria-label="Sections">
+      <button role="tab" data-tab="swap" aria-selected="true">Swap</button>
+      <button role="tab" data-tab="explore" aria-selected="false">Explore</button>
+      <button role="tab" data-tab="launch" aria-selected="false">Launch</button>
+    </nav>
 
     <main>
       <!-- ===================== SWAP ===================== -->
